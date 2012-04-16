@@ -41,21 +41,48 @@ class Domain d where
 class (Domain d) => FiniteDomain d where
   elems :: d a -> [a]
   
-class Constraint c where
-  satisfies :: (Domain d) => [d a] -> c (d a) -> Bool
-  weak :: (Domain d) => [d a] -> c (d a) -> Bool
-  decompose :: (Domain d, Ix i) => 
-               c (d a) -> [(i,d a)] -> Maybe [([i],c (d a))]
+data Satisfaction = Unsatisfiable | Indeterminate | Weak | Strong 
 
+(|||) :: Satisfaction -> Satisfaction -> Satisfaction
+Unsatisfiable ||| _ = Unsatisfiable
+_ ||| Unsatisfiable = Unsatisfiable
+Indeterminate ||| _ = Indeterminate
+_ ||| Indeterminate = Indeterminate
+Weak ||| _ = Weak
+_ ||| Weak = Weak
+Strong ||| Strong = Strong
+
+class Constraint c where
+  satisfies :: (Domain d) => [d a] -> c (d a) -> Satisfaction
+  decompose :: (Domain d) => 
+               c (d a) -> [(i,d a)] -> Maybe [([(i,d a)],c (d a))]
+  (+++) :: (Domain d) => c (d a) -> c (d a) -> c (d a)
 
 class ConstraintSystem s where
-  constrain :: (Ix i, Domain d, Constraint c)
-               => s (d a) -> [i] -> c (d a) -> s (d a)
+  getDomain :: (Domain d) => s i (d a) -> i -> d a
+  setDomain :: (Domain d) => s i (d a) -> i -> d a -> s i (d a)
+  constrain :: (Domain d, Constraint c)
+               => s i (d a) -> [i] -> c (d a) -> s i (d a)
+  unconstrain :: (Domain d, Constraint c)
+                 => s i (d a) -> [i] -> s i (d a)
+  constraints :: (Domain d, Constraint c)
+                 => s i (d a) -> [([i], c (d a))]
+  satisfied :: (Domain d) => s i (d a) -> Satisfaction
+  satisfied s = foldl (|||) Strong $ map sat $ constraints s where
+    sat (ix,c) = map (`satisfies` c) $ map (getDomain s) ix
   
-class (ConstraintSystem c) => SolvableConstraints c where
-  determinate :: (Domain d) => c (d a) -> Bool
-  solvable :: (Domain d) => c (d a) -> Maybe Bool
-  unsolvable :: (Domain d) => c (d a) -> Maybe Bool
-  solution :: (Domain d) => c (d a) -> Maybe (c (d a))
+class (ConstraintSystem s) => SolvableConstraints s where
+  solution :: (Domain d) => s (d a) -> Maybe (s (d a))
   
-data (FiniteDomain d, Ix i) => FSolver (d a) = 
+
+
+decomposeConstraints :: (ConstraintSystem s, Domain d)
+                        => s (d a) -> s (d a)
+decomposeConstraints s = where
+  deco :: (ConstraintSystem s, Constraint c, Domain d) 
+          => s (d a) -> ([i],c (d a)) -> s (d a)
+  deco sys (ix,c) = let decomp = decompose c $ 
+                                 zip ix (map (getDomain s) ix) in
+                    if isJust decomp then 
+  
+data (FiniteDomain d, Ix i) => FSolver i (d a) = 
