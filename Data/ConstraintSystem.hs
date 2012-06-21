@@ -46,11 +46,11 @@ instance Show Satisfaction where
   (+++) :: (Domain d) => c (d a) -> c (d a) -> c (d a)
 -}
 
-data Constraint d = Constraint {
-  satisfies :: (Domain d) => [Maybe (d a)] -> Satisfaction,
-  decompose :: (Domain d,Ord k) => [(k,Maybe (d a))] -> 
-               Maybe [([(k,Maybe (d a))],Constraint d)],
-  (+++) :: (Domain d) => Constraint d -> Constraint d
+data Constraint d a = Constraint {
+  satisfies :: (Domain d a) => [Maybe (d a)] -> Satisfaction,
+  decompose :: (Domain d a,Ord k) => [(k,Maybe (d a))] -> 
+               Maybe [([(k,Maybe (d a))],Constraint d a)],
+  (+++) :: (Domain d a) => Constraint d a -> Constraint d a
   }
                     
 {- simpleConstraint :: (Domain d, Ord k) =>
@@ -62,7 +62,7 @@ simpleConstraint s d = scomp where
   scomp = Constraint s d (compose scomp)
   --d :: [(k,Maybe (d a))] -> Maybe [([(k,Maybe (d a))],Constraint d)] -}
   
-compose :: (Domain d) => Constraint d -> Constraint d -> Constraint d
+compose :: (Domain d a) => Constraint d a -> Constraint d a -> Constraint d a
 compose c1 c2 = ccomp where
   ccomp = Constraint s d (compose ccomp)
   s ds = (satisfies c1 ds) <&> (satisfies c2 ds)
@@ -74,11 +74,11 @@ compose c1 c2 = ccomp where
 data ConstraintSystem k c d =
   CSys (Map k d) (Map [k] c)
 
-getDomain :: (Domain d, Ord k) =>
+getDomain :: (Domain d a, Ord k) =>
              ConstraintSystem k c (d a) -> k -> Maybe (d a)
 getDomain (CSys d_map _) key = Map.lookup key d_map
 
-setDomain :: (Domain d, Ord k) =>
+setDomain :: (Domain d a, Ord k) =>
              ConstraintSystem k c (d a) -> 
              k -> 
              d a ->
@@ -90,7 +90,7 @@ removeDomain :: (Ord k) =>
              ConstraintSystem k c d 
 removeDomain (CSys d_map c_map) key = CSys (Map.delete key d_map) c_map
 
-updateDomain :: (Domain d, Ord k) =>
+updateDomain :: (Domain d a, Ord k) =>
              ConstraintSystem k c (d a) -> 
              k -> 
              Maybe (d a) ->
@@ -98,11 +98,11 @@ updateDomain :: (Domain d, Ord k) =>
 updateDomain s key mDom = if isJust mDom then setDomain s key (fromJust mDom)
                           else removeDomain s key
 
-constrain :: (Domain d, Ord k) =>
-             ConstraintSystem k (Constraint d) (d a) -> 
-             Constraint d -> 
+constrain :: (Domain d a, Ord k) =>
+             ConstraintSystem k (Constraint d a) (d a) -> 
+             Constraint d a -> 
              [k] -> 
-             ConstraintSystem k (Constraint d) (d a) 
+             ConstraintSystem k (Constraint d a) (d a) 
 constrain (CSys d_map c_map) c ks = CSys d_map (Map.insertWith (+++) ks c c_map)
 
 unconstrain :: (Ord k) => 
@@ -111,14 +111,14 @@ unconstrain :: (Ord k) =>
                ConstraintSystem k c d
 unconstrain (CSys d_map c_map) ks = CSys d_map (Map.delete ks c_map)
 
-constraints :: (Domain d, Ord k) =>
-               ConstraintSystem k (Constraint d) (d a) ->
-               [([k],Constraint d)]
+constraints :: (Domain d a, Ord k) =>
+               ConstraintSystem k (Constraint d a) (d a) ->
+               [([k],Constraint d a)]
 constraints (CSys _ c_map) = Map.assocs c_map
 
 
-satisfied :: (Domain d, Ord k) =>
-             ConstraintSystem k (Constraint d) (d a) -> Satisfaction
+satisfied :: (Domain d a, Ord k) =>
+             ConstraintSystem k (Constraint d a) (d a) -> Satisfaction
 satisfied (CSys d_map c_map) = foldl (<&>) Strong $ 
                                map csat $ Map.assocs c_map where
   csat (ks,c) = satisfies c $ map (\k -> Map.lookup k d_map) ks
@@ -130,30 +130,30 @@ satisfied (CSys d_map c_map) = foldl (<&>) Strong $
 -- If decompose returns a Just value, replace domains with those in the
 -- returned list, removes the original constraint, and applies the new
 -- constraints from the decomposition.
-decomposeConstraints :: (Domain d, Ord k) =>
-                        ConstraintSystem k (Constraint d) (d a) ->
-                        ConstraintSystem k (Constraint d) (d a)
+decomposeConstraints :: (Domain d a, Ord k) =>
+                        ConstraintSystem k (Constraint d a) (d a) ->
+                        ConstraintSystem k (Constraint d a) (d a)
 
 decomposeConstraints s = foldl deco s $ constraints s where
   -- inserts new domain/vars into system
-  replace_doms :: (Domain d, Ord k) => 
+  replace_doms :: (Domain d a, Ord k) => 
                   ConstraintSystem k c (d a) -> 
                   [(k,Maybe (d a))] ->
                   ConstraintSystem k c (d a)
   replace_doms s t = foldl (\s' (key,dom) -> updateDomain s' key dom) s t
   -- applies new constraint
-  apply_decon :: (Domain d, Ord k) =>
-                 ConstraintSystem k (Constraint d) (d a) -> 
-                 ([(k,Maybe (d a))], Constraint d) ->
-                 ConstraintSystem k (Constraint d) (d a)
+  apply_decon :: (Domain d a, Ord k) =>
+                 ConstraintSystem k (Constraint d a) (d a) -> 
+                 ([(k,Maybe (d a))], Constraint d a) ->
+                 ConstraintSystem k (Constraint d a) (d a)
   apply_decon s (ix_d,c) = constrain (replace_doms s ix_d)
                            c (map fst ix_d) 
   -- decomposes constraints, fold over apply_decon to apply each
   -- piece of the decomposition
-  deco :: (Domain d, Ord k) => 
-          ConstraintSystem k (Constraint d) (d a) -> 
-          ([k],Constraint d) ->
-          ConstraintSystem k (Constraint d) (d a)
+  deco :: (Domain d a, Ord k) => 
+          ConstraintSystem k (Constraint d a) (d a) -> 
+          ([k],Constraint d a) ->
+          ConstraintSystem k (Constraint d a) (d a)
   deco sys (ix,c) = let decomp = decompose c $ 
                                  zip ix (map (getDomain sys) ix) in
                     if isJust decomp then 
