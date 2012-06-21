@@ -1,15 +1,12 @@
 {-# LANGUAGE Rank2Types #-}
-module Constraint (
-                   Satisfaction,
-                   (<&>),
-                  ) where
+module Data.ConstraintSystem (Satisfaction,
+                              (<&>),
+                             ) where
 
 import Data.Maybe
 import Data.Map (Map)
 import qualified Data.Map as Map
-import Data.Set (Set)
-import qualified Data.Set as Set
-
+import Data.ConstraintSystem.Domain
 
 {- | Sort of like Bool; constraints use this to indicate how well a collection
  of domain variables satisfies.
