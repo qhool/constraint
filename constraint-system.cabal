@@ -13,5 +13,6 @@ library
         exposed-modules:
                 Data.ConstraintSystem,
                 Data.ConstraintSystem.Domain
+                Data.ConstraintSystem.Domain.Integer
 
         build-depends:  base, containers, type-level, data-type
