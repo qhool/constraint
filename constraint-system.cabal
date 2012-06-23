@@ -14,5 +14,6 @@ library
                 Data.ConstraintSystem,
                 Data.ConstraintSystem.Domain
                 Data.ConstraintSystem.Domain.Integer
+                Data.ConstraintSystem.Domain.Named
 
         build-depends:  base, containers, type-level, data-type

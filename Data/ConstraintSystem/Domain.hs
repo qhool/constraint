@@ -1,4 +1,4 @@
-{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances, UndecidableInstances #-}
 module Data.ConstraintSystem.Domain (Domain(..),
                                      FiniteDomain(..)
                                     ) where
@@ -34,4 +34,5 @@ class Domain d a where
 class (Domain d a) => FiniteDomain d a where
   -- | list all values
   elems :: d a -> [a]
+  
 

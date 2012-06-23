@@ -1,5 +1,7 @@
 {-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances, UndecidableInstances #-}
-module Data.ConstraintSystem.Domain.Integer () where
+module Data.ConstraintSystem.Domain.Integer (SetDomain(..),
+                                             ModuloDomain(..)
+                                                      ) where
 
 import Data.ConstraintSystem.Domain
 import Data.List
