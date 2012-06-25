@@ -74,3 +74,6 @@ instance (Typ.Nat mod, Integral a) => FiniteDomain (ModuloDomain mod) a where
   elems Empty = []
   elems d@(All) = init [0..(modulus d)]
   elems (Listed s1) = Set.toList s1
+  size Empty = 0
+  size d@(All) = fromIntegral $ modulus d
+  size (Listed s1) = Set.size s1

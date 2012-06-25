@@ -47,6 +47,9 @@ instance (Eq a, NamedVar a) => FiniteDomain NamedDomain a where
   elems Empty = []
   elems All = allValues
   elems (Listed xs) = nub xs
+  size Empty = 0
+  size d@(All) = length $ elems d
+  size (Listed xs) = length xs
   
 data SampleNames = Alpha | Beta | Gamma | Delta deriving(Eq,Show)
 

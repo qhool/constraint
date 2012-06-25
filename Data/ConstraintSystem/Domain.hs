@@ -34,5 +34,6 @@ class Domain d a where
 class (Domain d a) => FiniteDomain d a where
   -- | list all values
   elems :: d a -> [a]
+  size :: d a -> Int
   
 
