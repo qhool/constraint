@@ -25,6 +25,8 @@ class Domain d a where
   reduce :: d a -> d a -> d a
   -- | Union of allowed values
   expand :: d a -> d a -> d a
+  -- | Abstract difference
+  remove :: d a -> d a -> d a
   reduces :: [d a] -> d a
   reduces t = foldl reduce universe t
   expands :: [d a] -> d a

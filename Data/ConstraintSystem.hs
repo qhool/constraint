@@ -1,4 +1,16 @@
-module Data.ConstraintSystem (
+module Data.ConstraintSystem (ConstraintSystem,
+                              constraintSystem,
+                              domains,
+                              getDomain,
+                              setDomain,
+                              removeDomain,
+                              updateDomain,
+                              constrain,
+                              unconstrain,
+                              satisfied,
+                              decomposeConstraints,
+                              fullyDecompose,
+                              finiteSolver
                              ) where
 
 import Data.Maybe
@@ -42,11 +54,11 @@ updateDomain s key mDom = if isJust mDom then setDomain s key (fromJust mDom)
                           else removeDomain s key
 
 constrain :: (Domain d a, Ord k) =>
+             Constraint d a ->              
+             [k] ->
              ConstraintSystem k (Constraint d a) (d a) -> 
-             Constraint d a -> 
-             [k] -> 
              ConstraintSystem k (Constraint d a) (d a) 
-constrain (CSys d_map c_map) c ks = CSys d_map (Map.insertWith (+++) ks c c_map)
+constrain c ks (CSys d_map c_map) = CSys d_map (Map.insertWith (+++) ks c c_map)
 
 unconstrain :: (Ord k) => 
                ConstraintSystem k c d ->
@@ -93,8 +105,8 @@ decomposeConstraints s = if_decomp $ foldl deco (0,s) $ constraints s where
                  ConstraintSystem k (Constraint d a) (d a) -> 
                  ([(k,Maybe (d a))], Constraint d a) ->
                  ConstraintSystem k (Constraint d a) (d a)
-  apply_decon s (ix_d,c) = constrain (replace_doms s ix_d)
-                           c (map fst ix_d) 
+  apply_decon s (ix_d,c) = constrain c (map fst ix_d) (replace_doms s ix_d)
+                          
   -- decomposes constraints, fold over apply_decon to apply each
   -- piece of the decomposition
   deco :: (Domain d a, Ord k) => 

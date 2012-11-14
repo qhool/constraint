@@ -17,4 +17,6 @@ library
                 Data.ConstraintSystem.Domain
                 Data.ConstraintSystem.Domain.Integer
                 Data.ConstraintSystem.Domain.Named
+                Data.ConstraintSystem.Example.Farmer
+                Data.ConstraintSystem.Example.Sudoku
         build-depends:  base, containers, type-level, data-type

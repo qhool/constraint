@@ -48,6 +48,9 @@ instance (Ord a,SetDomain d a) => Domain d a where
              | isEmpty a = b
              | isEmpty b = a
              | otherwise = makeCanonical $ Set.union (getSet a) (getSet b)
+  remove a b | isComplete b = empty
+             | isEmpty a = empty
+             | otherwise = makeCanonical $ Set.difference (getSet a) (getSet b)        
                          
 data ModuloDomain mod a = 
   All | Empty | Listed { values :: Set a }
